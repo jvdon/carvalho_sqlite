@@ -1,4 +1,3 @@
-import 'package:carvalho/db/entrada_db.dart';
 import 'package:carvalho/db/quarto_db.dart';
 import 'package:carvalho/model/quarto.dart';
 import 'package:carvalho/partials/custom_input.dart';
@@ -64,6 +63,8 @@ class _QuartosPageState extends State<QuartosPage> {
                     ),
                   );
                 }
+                quartos
+                    .sort((a, b) => (a.status == Quarto_Status.LIVRE) ? -1 : 1);
                 return Scaffold(
                   floatingActionButton: IconButton(
                     onPressed: () {
@@ -79,7 +80,7 @@ class _QuartosPageState extends State<QuartosPage> {
                   body: GridView.builder(
                     padding: EdgeInsets.all(10),
                     gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 150,
+                      maxCrossAxisExtent: 160,
                       crossAxisSpacing: 5,
                       mainAxisSpacing: 5,
                     ),

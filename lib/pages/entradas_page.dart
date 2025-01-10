@@ -25,6 +25,7 @@ class EntradasPage extends StatefulWidget {
 }
 
 class _EntradasPageState extends State<EntradasPage> {
+  int month = 0;
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -72,6 +73,17 @@ class _EntradasPageState extends State<EntradasPage> {
                     ),
                   );
                 }
+
+                entradas.sort(
+                  (a, b) => b.checkin.compareTo(a.checkin),
+                );
+
+                if (month != 0) {
+                  entradas = entradas
+                      .where((entrada) => entrada.checkin.month == month)
+                      .toList();
+                }
+
                 return Scaffold(
                   floatingActionButton: IconButton(
                     onPressed: () {
@@ -83,6 +95,29 @@ class _EntradasPageState extends State<EntradasPage> {
                       });
                     },
                     icon: Icon(Icons.add),
+                  ),
+                  appBar: AppBar(
+                    title: Text(
+                        "Total: R\$ ${entradas.isNotEmpty ? entradas.map((e) => e.total).reduce((a, b) => a + b) : 0}"),
+                    actions: [
+                      DropdownMenu(
+                        initialSelection: 0,
+                        onSelected: (value) {
+                          if (value != null) {
+                            // print(value);
+                            setState(() {
+                              month = value;
+                            });
+                          }
+                        },
+                        dropdownMenuEntries: months.values
+                            .map(
+                              (e) => DropdownMenuEntry(
+                                  value: e.index, label: e.name),
+                            )
+                            .toList(),
+                      ),
+                    ],
                   ),
                   body: ListView.builder(
                     itemCount: entradas.length,
@@ -100,6 +135,7 @@ class _EntradasPageState extends State<EntradasPage> {
                           children: [
                             IconText(
                               icon: Icons.people,
+                              width: 200,
                               text:
                                   "${entrada.hospedes.length} x ${dataSet.first.nome}",
                             ),
@@ -119,7 +155,7 @@ class _EntradasPageState extends State<EntradasPage> {
                                 IconText(
                                   icon: Icons.currency_bitcoin,
                                   text: "R\$ ${entrada.total}",
-                                  width: 85,
+                                  width: 90,
                                   spacing: 5,
                                 ),
                                 IconText(
@@ -267,6 +303,8 @@ class _EntradasPageState extends State<EntradasPage> {
                           );
                         } else {
                           List<Quarto> quartoLocal = snapshot.requireData;
+                          quartoLocal
+                              .sort((a, b) => a.number.compareTo(b.number));
                           return StatefulBuilder(
                             builder: (context, setState) => GridView.builder(
                               gridDelegate:
@@ -536,7 +574,7 @@ class _EntradasPageState extends State<EntradasPage> {
                     "hospedes":
                         jsonEncode(hospedes.map((e) => e.toJson()).toList()),
                     "diaria": diaria.doubleValue,
-                    "total": ((checkOut.difference(checkIn).inDays + 1) *
+                    "total": ((checkOut.difference(checkIn).inDays) *
                         hospedes.length *
                         diaria.doubleValue),
                     "paga": 0,
@@ -629,6 +667,8 @@ class _EntradasPageState extends State<EntradasPage> {
                           );
                         } else {
                           List<Quarto> quartoLocal = snapshot.requireData;
+                          quartoLocal
+                              .sort((a, b) => a.number.compareTo(b.number));
                           return StatefulBuilder(
                             builder: (context, setState) => GridView.builder(
                               gridDelegate:
@@ -896,7 +936,7 @@ class _EntradasPageState extends State<EntradasPage> {
                   "hospedes":
                       jsonEncode(hospedes.map((e) => e.toJson()).toList()),
                   "diaria": diaria.doubleValue,
-                  "total": ((checkOut.difference(checkIn).inDays + 1) *
+                  "total": ((checkOut.difference(checkIn).inDays) *
                       hospedes.length *
                       diaria.doubleValue),
                   "paga": 0,
@@ -932,7 +972,7 @@ class _EntradasPageState extends State<EntradasPage> {
     );
 
     TextEditingController pagante = TextEditingController();
-    DateTime data = DateTime.now();
+    DateTime data = entrada.checkout;
     TextEditingController metodo = TextEditingController();
 
     return Dialog(
@@ -973,7 +1013,7 @@ class _EntradasPageState extends State<EntradasPage> {
                     firstDate: DateTime.now().subtract(Duration(days: 120)),
                     currentDate: DateTime.now(),
                     lastDate: DateTime.now().add(Duration(days: 120)),
-                    helpText: "Check-in",
+                    helpText: "Data de Pagamento",
                   );
                   if (nData != null) {
                     data = nData;
@@ -1050,6 +1090,12 @@ class _EntradasPageState extends State<EntradasPage> {
                       total.doubleValue,
                     );
                   }
+
+                  entrada.quartos.forEach(
+                    (quarto) {
+                      QuartoDB().vagarQuarto(quarto.number);
+                    },
+                  );
 
                   Navigator.of(context).pop();
                 },

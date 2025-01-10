@@ -57,9 +57,14 @@ class EntradaDB {
   Future<bool> setPago(int id) async {
     var col = await getDatabase();
 
-    int rows = await col.update("entradas", {
-      "paga": 1,
-    });
+    int rows = await col.update(
+      "entradas",
+      {
+        "paga": 1,
+      },
+      where: "id = ?",
+      whereArgs: [id],
+    );
 
     return rows > 0;
   }
@@ -67,9 +72,14 @@ class EntradaDB {
   Future<bool> changeTotal(int id, double total) async {
     var col = await getDatabase();
 
-    int rows = await col.update("entradas", {
-      "total": total,
-    });
+    int rows = await col.update(
+      "entradas",
+      {
+        "total": total,
+      },
+      where: "id = ?",
+      whereArgs: [id],
+    );
 
     return rows > 0;
   }

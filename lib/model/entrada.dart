@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:carvalho/conf.dart';
 import 'package:carvalho/model/hospede.dart';
 import 'package:carvalho/model/quarto.dart';
 
@@ -60,8 +61,8 @@ class Entrada {
   String toString() {
     return """
       Id: ${id.toString()}
-      Checkin: ${checkin.millisecondsSinceEpoch}
-      Checkout: ${checkout.millisecondsSinceEpoch}
+      Checkin: ${formater.format(checkin)}
+      Checkout: ${formater.format(checkout)}
       Pago: ${paga}
       Hospedes: ${hospedes.length}
       Quartos: ${quartos.length}

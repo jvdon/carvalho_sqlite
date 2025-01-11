@@ -4,12 +4,14 @@ import 'package:carvalho/conf.dart';
 import 'package:carvalho/model/hospede.dart';
 
 class Pagamento {
+  int id;
   Hospede pagante;
   double valor;
   DateTime data;
   METODO_PAGAMENTO metodo_pagamento;
 
   Pagamento({
+    required this.id,
     required this.pagante,
     required this.valor,
     required this.data,
@@ -22,6 +24,7 @@ class Pagamento {
         : int.parse(map['data'].toString());
 
     return Pagamento(
+      id: map['id'],
       pagante: Hospede.fromMap(jsonDecode(map['pagante'])),
       valor: map['valor'],
       data: DateTime.fromMillisecondsSinceEpoch(data),

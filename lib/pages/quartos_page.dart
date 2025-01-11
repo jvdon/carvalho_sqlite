@@ -63,8 +63,7 @@ class _QuartosPageState extends State<QuartosPage> {
                     ),
                   );
                 }
-                quartos
-                    .sort((a, b) => (a.status == Quarto_Status.LIVRE) ? -1 : 1);
+                quartos.sort((a, b) => (a.status == Quarto_Status.LIVRE) ? -1 : 1);
                 return Scaffold(
                   floatingActionButton: IconButton(
                     onPressed: () {
@@ -114,8 +113,7 @@ class _QuartosPageState extends State<QuartosPage> {
                                     onPressed: () async {
                                       showDialog(
                                         context: context,
-                                        builder: (context) =>
-                                            _buildEditQuarto(context, quarto),
+                                        builder: (context) => _buildEditQuarto(context, quarto),
                                       ).then(
                                         (value) {
                                           setState(() {});
@@ -129,10 +127,8 @@ class _QuartosPageState extends State<QuartosPage> {
                                     tooltip: "Deletar",
                                     enableFeedback: true,
                                     onPressed: () async {
-                                      bool ok = await QuartoDB()
-                                          .deleteQuarto(quarto.number);
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
+                                      bool ok = await QuartoDB().deleteQuarto(quarto.number);
+                                      ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: Text(
                                             ok
@@ -158,8 +154,7 @@ class _QuartosPageState extends State<QuartosPage> {
                                           "status": Quarto_Status.LIVRE.name
                                         };
 
-                                        bool ok = await QuartoDB()
-                                            .updateQuarto(quarto.number, room);
+                                        await QuartoDB().updateQuarto(quarto.number, room);
                                         setState(() {});
                                       },
                                     ),
@@ -242,8 +237,8 @@ class _QuartosPageState extends State<QuartosPage> {
 
                   Navigator.of(context).pop();
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Preencha todos os campos")));
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text("Preencha todos os campos")));
                 }
               },
               child: Text("Adicionar"),
@@ -255,12 +250,9 @@ class _QuartosPageState extends State<QuartosPage> {
   }
 
   Widget _buildEditQuarto(BuildContext context, Quarto quarto) {
-    TextEditingController number =
-        TextEditingController(text: quarto.number.toString());
-    TextEditingController occupancy =
-        TextEditingController(text: quarto.occupancy.toString());
-    TextEditingController status =
-        TextEditingController(text: quarto.status.name);
+    TextEditingController number = TextEditingController(text: quarto.number.toString());
+    TextEditingController occupancy = TextEditingController(text: quarto.occupancy.toString());
+    TextEditingController status = TextEditingController(text: quarto.status.name);
 
     return Dialog(
       child: Container(

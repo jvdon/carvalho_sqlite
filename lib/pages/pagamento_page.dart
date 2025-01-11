@@ -57,6 +57,13 @@ class _PagamentoPageState extends State<PagamentoPage> {
 
                       return ListTile(
                         leading: Icon(Icons.monetization_on),
+                        trailing: IconButton(
+                          onPressed: () async {
+                            await PagamentoDB().deletePagamento(pagamento.id);
+                            setState(() {});
+                          },
+                          icon: Icon(Icons.delete),
+                        ),
                         title: Row(
                           children: [
                             IconText(
@@ -74,7 +81,7 @@ class _PagamentoPageState extends State<PagamentoPage> {
                             IconText(
                               icon: Icons.calendar_month,
                               text: formater.format(pagamento.data),
-                              width: 85,
+                              width: 90,
                               spacing: 2,
                             ),
                             IconText(

@@ -31,4 +31,11 @@ class PagamentoDB {
     int res = await col.insert("pagamentos", pagamento);
     return res > 0;
   }
+
+  Future<bool> deletePagamento(int id) async {
+    var col = await getDatabase();
+    int res = await col.delete("pagamentos", where: 'id = ?', whereArgs: [id]);
+
+    return res > 0;
+  }
 }

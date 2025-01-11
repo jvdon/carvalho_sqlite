@@ -17,3 +17,12 @@ enum months {
   NOVEMBRO,
   DEZEMBRO
 }
+
+enum ordenador {
+  NOME,
+  VALOR,
+  CHECKIN,
+  CHECKOUT,
+  KPA,
+  PAGO,
+}

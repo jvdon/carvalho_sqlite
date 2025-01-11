@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:carvalho/conf.dart';
 import 'package:carvalho/db/entrada_db.dart';
@@ -14,8 +15,14 @@ import 'package:carvalho/partials/custom_input.dart';
 import 'package:carvalho/partials/icon_text.dart';
 import 'package:currency_textfield/currency_textfield.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
 import 'package:pix_flutter/pix_flutter.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class EntradasPage extends StatefulWidget {
   const EntradasPage({super.key});
@@ -26,6 +33,7 @@ class EntradasPage extends StatefulWidget {
 
 class _EntradasPageState extends State<EntradasPage> {
   int month = 0;
+  ordenador orde = ordenador.VALOR;
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -74,14 +82,40 @@ class _EntradasPageState extends State<EntradasPage> {
                   );
                 }
 
-                entradas.sort(
-                  (a, b) => b.checkin.compareTo(a.checkin),
-                );
+                switch (orde) {
+                  case ordenador.CHECKIN:
+                    entradas.sort(
+                      (a, b) => b.checkin.compareTo(a.checkin),
+                    );
+                    break;
+                  case ordenador.CHECKOUT:
+                    entradas.sort(
+                      (a, b) => b.checkout.compareTo(a.checkout),
+                    );
+                    break;
+                  case ordenador.VALOR:
+                    entradas.sort(
+                      (a, b) => b.total.compareTo(a.total),
+                    );
+                    break;
+                  case ordenador.KPA:
+                    entradas.sort(
+                      (a, b) => b.hospedes.length.compareTo(a.hospedes.length),
+                    );
+                    break;
+                  case ordenador.NOME:
+                    entradas.sort(
+                      (a, b) => b.hospedes.first.nome.compareTo(a.hospedes.first.nome),
+                    );
+                    break;
+                  case ordenador.PAGO:
+                    entradas.sort(
+                      (a, b) => b.paga ? 1 : -1,
+                    );
+                }
 
                 if (month != 0) {
-                  entradas = entradas
-                      .where((entrada) => entrada.checkin.month == month)
-                      .toList();
+                  entradas = entradas.where((entrada) => entrada.checkin.month == month).toList();
                 }
 
                 return Scaffold(
@@ -97,11 +131,21 @@ class _EntradasPageState extends State<EntradasPage> {
                     icon: Icon(Icons.add),
                   ),
                   appBar: AppBar(
-                    title: Text(
-                        "Total: R\$ ${entradas.isNotEmpty ? entradas.map((e) => e.total).reduce((a, b) => a + b) : 0}"),
+                    title: Column(
+                      children: [
+                        Text(
+                          "Total: R\$ ${entradas.isNotEmpty ? entradas.map((e) => e.total).reduce((a, b) => a + b) : 0}",
+                        ),
+                        Text(
+                          "Total pago: R\$ ${entradas.where((element) => element.paga).isNotEmpty ? entradas.where(
+                                (element) => element.paga,
+                              ).map((e) => e.total).reduce((a, b) => a + b) : 0}",
+                        )
+                      ],
+                    ),
                     actions: [
                       DropdownMenu(
-                        initialSelection: 0,
+                        initialSelection: month,
                         onSelected: (value) {
                           if (value != null) {
                             // print(value);
@@ -112,8 +156,23 @@ class _EntradasPageState extends State<EntradasPage> {
                         },
                         dropdownMenuEntries: months.values
                             .map(
-                              (e) => DropdownMenuEntry(
-                                  value: e.index, label: e.name),
+                              (e) => DropdownMenuEntry(value: e.index, label: e.name),
+                            )
+                            .toList(),
+                      ),
+                      DropdownMenu(
+                        initialSelection: orde,
+                        onSelected: (value) {
+                          if (value != null) {
+                            // print(value);
+                            setState(() {
+                              orde = (value);
+                            });
+                          }
+                        },
+                        dropdownMenuEntries: ordenador.values
+                            .map(
+                              (e) => DropdownMenuEntry(value: e, label: e.name),
                             )
                             .toList(),
                       ),
@@ -136,14 +195,11 @@ class _EntradasPageState extends State<EntradasPage> {
                             IconText(
                               icon: Icons.people,
                               width: 200,
-                              text:
-                                  "${entrada.hospedes.length} x ${dataSet.first.nome}",
+                              text: "${entrada.hospedes.length} x ${dataSet.first.nome}",
                             ),
                             IconText(
                               icon: Icons.meeting_room,
-                              text: entrada.quartos
-                                  .map((e) => e.number)
-                                  .join(" | "),
+                              text: entrada.quartos.map((e) => e.number).join(" | "),
                             ),
                           ],
                         ),
@@ -184,8 +240,7 @@ class _EntradasPageState extends State<EntradasPage> {
                                   onPressed: () {
                                     showDialog(
                                       context: context,
-                                      builder: (context) =>
-                                          _buildEditEntrada(context, entrada),
+                                      builder: (context) => _buildEditEntrada(context, entrada),
                                     ).then(
                                       (value) {
                                         setState(() {});
@@ -209,8 +264,7 @@ class _EntradasPageState extends State<EntradasPage> {
                                     onPressed: () {
                                       showDialog(
                                         context: context,
-                                        builder: (context) =>
-                                            _buildPagar(context, entrada),
+                                        builder: (context) => _buildPagar(context, entrada),
                                       ).then(
                                         (value) {
                                           setState(() {});
@@ -219,6 +273,57 @@ class _EntradasPageState extends State<EntradasPage> {
                                     },
                                     icon: Icon(Icons.currency_exchange),
                                   ),
+                                IconButton(
+                                  onPressed: () async {
+                                    Directory directory = await getDownloadsDirectory() ??
+                                        await getApplicationDocumentsDirectory();
+                                    String fileName =
+                                        "hospedagem_${entrada.hospedes.first.nome}_${DateFormat("d_M_y").format(entrada.checkin)}.pdf";
+                                    String path = join(directory.path, fileName);
+                                    // print(path);
+
+                                    final pdf = pw.Document();
+                                    pdf.addPage(
+                                      pw.Page(
+                                        pageFormat: PdfPageFormat.a4,
+                                        build: (context) => pw.Column(
+                                          mainAxisAlignment: pw.MainAxisAlignment.start,
+                                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                          children: [
+                                            pw.Center(
+                                              child: pw.Column(
+                                                children: [
+                                                  pw.Text("Carvalho de Oliveira e Cia Ltda"),
+                                                  pw.Text("Hotel Carvalho"),
+                                                ],
+                                              ),
+                                            ),
+                                            pw.Text(entrada.hospedes.first.nome),
+                                            pw.Row(
+                                              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                pw.Text(
+                                                    "Entrada: ${formater.format(entrada.checkin)}"),
+                                                pw.Text(
+                                                    "Saída: ${formater.format(entrada.checkout)}"),
+                                              ],
+                                            ),
+                                            pw.Text("Hospedes: ${entrada.hospedes.length}"),
+                                            pw.Text("Unidades: ${entrada.quartos.map(
+                                                  (e) => e.number,
+                                                ).join(", ")}"),
+                                            pw.Text("Diaria: R\$${entrada.diaria}"),
+                                            pw.Text("Total: R\$${entrada.total}"),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                    var file = File(path);
+                                    await file.writeAsBytes(await pdf.save());
+                                    await OpenFilex.open(path);
+                                  },
+                                  icon: Icon(Icons.print),
+                                ),
                               ],
                             ),
                           ],
@@ -303,12 +408,10 @@ class _EntradasPageState extends State<EntradasPage> {
                           );
                         } else {
                           List<Quarto> quartoLocal = snapshot.requireData;
-                          quartoLocal
-                              .sort((a, b) => a.number.compareTo(b.number));
+                          quartoLocal.sort((a, b) => a.number.compareTo(b.number));
                           return StatefulBuilder(
                             builder: (context, setState) => GridView.builder(
-                              gridDelegate:
-                                  SliverGridDelegateWithMaxCrossAxisExtent(
+                              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                                 maxCrossAxisExtent: 100,
                                 childAspectRatio: 1.2,
                               ),
@@ -329,12 +432,10 @@ class _EntradasPageState extends State<EntradasPage> {
                                       color: (quartos.contains(quarto))
                                           ? Colors.red[900]
                                           : Colors.black54,
-                                      borderRadius:
-                                          BorderRadius.all(Radius.circular(15)),
+                                      borderRadius: BorderRadius.all(Radius.circular(15)),
                                     ),
                                     child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                       children: [
                                         Text("# ${quarto.number}"),
                                         IconText(
@@ -409,8 +510,7 @@ class _EntradasPageState extends State<EntradasPage> {
                           List<Hospede> hospedeLocal = snapshot.requireData;
                           return StatefulBuilder(
                             builder: (context, setState) => GridView.builder(
-                              gridDelegate:
-                                  SliverGridDelegateWithMaxCrossAxisExtent(
+                              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                                 maxCrossAxisExtent: 150,
                                 childAspectRatio: 1.2,
                               ),
@@ -420,23 +520,18 @@ class _EntradasPageState extends State<EntradasPage> {
                                 return Container(
                                   decoration: BoxDecoration(
                                     color: Colors.black54,
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(15)),
+                                    borderRadius: BorderRadius.all(Radius.circular(15)),
                                   ),
                                   child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                     children: [
-                                      Icon((hospede.empresa)
-                                          ? Icons.business
-                                          : Icons.people),
+                                      Icon((hospede.empresa) ? Icons.business : Icons.people),
                                       IconText(
                                         icon: Icons.abc,
                                         text: hospede.nome,
                                       ),
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           IconButton(
                                             onPressed: () {
@@ -447,8 +542,7 @@ class _EntradasPageState extends State<EntradasPage> {
                                           ),
                                           Text(
                                             hospedes
-                                                .where((element) =>
-                                                    element == hospede)
+                                                .where((element) => element == hospede)
                                                 .length
                                                 .toString(),
                                           ),
@@ -563,16 +657,12 @@ class _EntradasPageState extends State<EntradasPage> {
             ),
             TextButton(
               onPressed: () async {
-                if (quartos.isNotEmpty &&
-                    hospedes.isNotEmpty &&
-                    diaria.value.text.isNotEmpty) {
+                if (quartos.isNotEmpty && hospedes.isNotEmpty && diaria.value.text.isNotEmpty) {
                   Map<String, dynamic> entrada = {
                     "checkin": checkIn.millisecondsSinceEpoch,
                     "checkout": checkOut.millisecondsSinceEpoch,
-                    "quartos":
-                        jsonEncode(quartos.map((e) => e.toJson()).toList()),
-                    "hospedes":
-                        jsonEncode(hospedes.map((e) => e.toJson()).toList()),
+                    "quartos": jsonEncode(quartos.map((e) => e.toJson()).toList()),
+                    "hospedes": jsonEncode(hospedes.map((e) => e.toJson()).toList()),
                     "diaria": diaria.doubleValue,
                     "total": ((checkOut.difference(checkIn).inDays) *
                         hospedes.length *
@@ -667,12 +757,10 @@ class _EntradasPageState extends State<EntradasPage> {
                           );
                         } else {
                           List<Quarto> quartoLocal = snapshot.requireData;
-                          quartoLocal
-                              .sort((a, b) => a.number.compareTo(b.number));
+                          quartoLocal.sort((a, b) => a.number.compareTo(b.number));
                           return StatefulBuilder(
                             builder: (context, setState) => GridView.builder(
-                              gridDelegate:
-                                  SliverGridDelegateWithMaxCrossAxisExtent(
+                              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                                 maxCrossAxisExtent: 100,
                                 childAspectRatio: 1.2,
                               ),
@@ -693,12 +781,10 @@ class _EntradasPageState extends State<EntradasPage> {
                                       color: (quartos.contains(quarto))
                                           ? Colors.red[900]
                                           : Colors.black54,
-                                      borderRadius:
-                                          BorderRadius.all(Radius.circular(15)),
+                                      borderRadius: BorderRadius.all(Radius.circular(15)),
                                     ),
                                     child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                       children: [
                                         Text("# ${quarto.number}"),
                                         IconText(
@@ -773,8 +859,7 @@ class _EntradasPageState extends State<EntradasPage> {
                           List<Hospede> hospedeLocal = snapshot.requireData;
                           return StatefulBuilder(
                             builder: (context, setState) => GridView.builder(
-                              gridDelegate:
-                                  SliverGridDelegateWithMaxCrossAxisExtent(
+                              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                                 maxCrossAxisExtent: 150,
                                 childAspectRatio: 1.2,
                               ),
@@ -784,23 +869,18 @@ class _EntradasPageState extends State<EntradasPage> {
                                 return Container(
                                   decoration: BoxDecoration(
                                     color: Colors.black54,
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(15)),
+                                    borderRadius: BorderRadius.all(Radius.circular(15)),
                                   ),
                                   child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                     children: [
-                                      Icon((hospede.empresa)
-                                          ? Icons.business
-                                          : Icons.people),
+                                      Icon((hospede.empresa) ? Icons.business : Icons.people),
                                       IconText(
                                         icon: Icons.abc,
                                         text: hospede.nome,
                                       ),
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           IconButton(
                                             onPressed: () {
@@ -811,8 +891,7 @@ class _EntradasPageState extends State<EntradasPage> {
                                           ),
                                           Text(
                                             hospedes
-                                                .where((element) =>
-                                                    element == hospede)
+                                                .where((element) => element == hospede)
                                                 .length
                                                 .toString(),
                                           ),
@@ -931,10 +1010,8 @@ class _EntradasPageState extends State<EntradasPage> {
                 Map<String, dynamic> new_entrada = {
                   "checkin": checkIn.millisecondsSinceEpoch,
                   "checkout": checkOut.millisecondsSinceEpoch,
-                  "quartos":
-                      jsonEncode(quartos.map((e) => e.toJson()).toList()),
-                  "hospedes":
-                      jsonEncode(hospedes.map((e) => e.toJson()).toList()),
+                  "quartos": jsonEncode(quartos.map((e) => e.toJson()).toList()),
+                  "hospedes": jsonEncode(hospedes.map((e) => e.toJson()).toList()),
                   "diaria": diaria.doubleValue,
                   "total": ((checkOut.difference(checkIn).inDays) *
                       hospedes.length *
@@ -942,8 +1019,7 @@ class _EntradasPageState extends State<EntradasPage> {
                   "paga": 0,
                 };
 
-                bool ok =
-                    await EntradaDB().updateEntrada(entrada.id, new_entrada);
+                bool ok = await EntradaDB().updateEntrada(entrada.id, new_entrada);
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -1001,8 +1077,7 @@ class _EntradasPageState extends State<EntradasPage> {
                 },
                 dropdownMenuEntries: entrada.hospedes
                     .map(
-                      (e) =>
-                          DropdownMenuEntry(value: e.toJson(), label: e.nome),
+                      (e) => DropdownMenuEntry(value: e.toJson(), label: e.nome),
                     )
                     .toList(),
               ),
@@ -1081,7 +1156,7 @@ class _EntradasPageState extends State<EntradasPage> {
                     "data": data.millisecondsSinceEpoch,
                     "metodo": metodo.text,
                   };
-                  bool ok = await PagamentoDB().addPagamento(pagamento);
+                  await PagamentoDB().addPagamento(pagamento);
                   if (entrada.total == total.doubleValue) {
                     await EntradaDB().setPago(entrada.id);
                   } else {

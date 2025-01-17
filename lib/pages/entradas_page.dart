@@ -204,7 +204,9 @@ class _EntradasPageState extends State<EntradasPage> {
                           ],
                         ),
                         subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Text(entrada.observacao),
                             Row(
                               spacing: 5,
                               children: [
@@ -350,8 +352,8 @@ class _EntradasPageState extends State<EntradasPage> {
   }
 
   Widget _buildAddEntrada(BuildContext context) {
-    DateTime checkIn = DateTime.now();
-    DateTime checkOut = DateTime.now();
+    DateTime checkIn = DateTime.now().toLocal();
+    DateTime checkOut = DateTime.now().toLocal();
     List<Quarto> quartos = [];
     List<Hospede> hospedes = [];
     CurrencyTextFieldController diaria = CurrencyTextFieldController(
@@ -360,39 +362,107 @@ class _EntradasPageState extends State<EntradasPage> {
       thousandSymbol: ".",
       minValue: 0,
     );
+    TextEditingController observacao = TextEditingController();
 
     return Dialog(
       insetPadding: EdgeInsets.all(15),
       child: Container(
         padding: EdgeInsets.all(15),
         width: MediaQuery.of(context).size.width,
-        color: Colors.black87,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          spacing: 10,
-          children: [
-            // Quartos
-            InputDecorator(
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                label: Text("Quartos"),
-              ),
-              child: Container(
-                height: 150,
-                child: FutureBuilder(
-                  future: QuartoDB().avaliable(),
-                  builder: (context, snapshot) {
-                    switch (snapshot.connectionState) {
-                      case ConnectionState.waiting:
-                        return Center(
-                          child: Container(
-                            width: 50,
-                            height: 50,
-                            child: CircularProgressIndicator(),
-                          ),
-                        );
-                      case ConnectionState.done:
-                        if (snapshot.hasError) {
+        decoration: BoxDecoration(
+          color: Colors.black87,
+          border: Border.all(
+            color: Colors.white,
+          ),
+          borderRadius: BorderRadius.all(Radius.circular(15)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            spacing: 10,
+            children: [
+              // Quartos
+              InputDecorator(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  label: Text("Quartos"),
+                ),
+                child: Container(
+                  height: 150,
+                  child: FutureBuilder(
+                    future: QuartoDB().avaliable(),
+                    builder: (context, snapshot) {
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return Center(
+                            child: Container(
+                              width: 50,
+                              height: 50,
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        case ConnectionState.done:
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Container(
+                                width: 100,
+                                height: 100,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.error),
+                                    Text("Unable to fetch rooms"),
+                                  ],
+                                ),
+                              ),
+                            );
+                          } else {
+                            List<Quarto> quartoLocal = snapshot.requireData;
+                            quartoLocal.sort((a, b) => a.number.compareTo(b.number));
+                            return StatefulBuilder(
+                              builder: (context, setState) => GridView.builder(
+                                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 100,
+                                  childAspectRatio: 1.2,
+                                ),
+                                itemCount: quartoLocal.length,
+                                itemBuilder: (context, index) {
+                                  Quarto quarto = quartoLocal[index];
+                                  return GestureDetector(
+                                    onTap: () {
+                                      if (quartos.contains(quarto)) {
+                                        quartos.remove(quarto);
+                                      } else {
+                                        quartos.add(quarto);
+                                      }
+                                      setState(() {});
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: (quartos.contains(quarto))
+                                            ? Colors.red[900]
+                                            : Colors.black54,
+                                        borderRadius: BorderRadius.all(Radius.circular(15)),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          Text("# ${quarto.number}"),
+                                          IconText(
+                                            icon: Icons.people,
+                                            text: "${quarto.occupancy} x ",
+                                            spacing: 0,
+                                            reversed: true,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          }
+                        default:
                           return Center(
                             child: Container(
                               width: 100,
@@ -400,99 +470,109 @@ class _EntradasPageState extends State<EntradasPage> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.error),
-                                  Text("Unable to fetch rooms"),
+                                  Icon(Icons.question_mark),
+                                  Text("Unknown state"),
                                 ],
                               ),
                             ),
                           );
-                        } else {
-                          List<Quarto> quartoLocal = snapshot.requireData;
-                          quartoLocal.sort((a, b) => a.number.compareTo(b.number));
-                          return StatefulBuilder(
-                            builder: (context, setState) => GridView.builder(
-                              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 100,
-                                childAspectRatio: 1.2,
+                      }
+                    },
+                  ),
+                ),
+              ),
+              // Hospedes
+              InputDecorator(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  label: Text("Hospedes"),
+                ),
+                child: Container(
+                  height: 150,
+                  child: FutureBuilder(
+                    future: HospedeDB().hospedes(),
+                    builder: (context, snapshot) {
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return Center(
+                            child: Container(
+                              width: 50,
+                              height: 50,
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        case ConnectionState.done:
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Container(
+                                width: 100,
+                                height: 100,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.error),
+                                    Text("Unable to fetch rooms"),
+                                  ],
+                                ),
                               ),
-                              itemCount: quartoLocal.length,
-                              itemBuilder: (context, index) {
-                                Quarto quarto = quartoLocal[index];
-                                return GestureDetector(
-                                  onTap: () {
-                                    if (quartos.contains(quarto)) {
-                                      quartos.remove(quarto);
-                                    } else {
-                                      quartos.add(quarto);
-                                    }
-                                    setState(() {});
-                                  },
-                                  child: Container(
+                            );
+                          } else {
+                            List<Hospede> hospedeLocal = snapshot.requireData;
+                            return StatefulBuilder(
+                              builder: (context, setState) => GridView.builder(
+                                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 150,
+                                  childAspectRatio: 1.2,
+                                ),
+                                itemCount: hospedeLocal.length,
+                                itemBuilder: (context, index) {
+                                  Hospede hospede = hospedeLocal[index];
+                                  return Container(
                                     decoration: BoxDecoration(
-                                      color: (quartos.contains(quarto))
-                                          ? Colors.red[900]
-                                          : Colors.black54,
+                                      color: Colors.black54,
                                       borderRadius: BorderRadius.all(Radius.circular(15)),
                                     ),
                                     child: Column(
                                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                       children: [
-                                        Text("# ${quarto.number}"),
+                                        Icon((hospede.empresa) ? Icons.business : Icons.people),
                                         IconText(
-                                          icon: Icons.people,
-                                          text: "${quarto.occupancy} x ",
-                                          spacing: 0,
-                                          reversed: true,
+                                          icon: Icons.abc,
+                                          text: hospede.nome,
+                                        ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            IconButton(
+                                              onPressed: () {
+                                                hospedes.remove(hospede);
+                                                setState(() {});
+                                              },
+                                              icon: Icon(Icons.remove),
+                                            ),
+                                            Text(
+                                              hospedes
+                                                  .where((element) => element == hospede)
+                                                  .length
+                                                  .toString(),
+                                            ),
+                                            IconButton(
+                                              onPressed: () {
+                                                hospedes.add(hospede);
+                                                setState(() {});
+                                              },
+                                              icon: Icon(Icons.add),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        }
-                      default:
-                        return Center(
-                          child: Container(
-                            width: 100,
-                            height: 100,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.question_mark),
-                                Text("Unknown state"),
-                              ],
-                            ),
-                          ),
-                        );
-                    }
-                  },
-                ),
-              ),
-            ),
-            // Hospedes
-            InputDecorator(
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                label: Text("Hospedes"),
-              ),
-              child: Container(
-                height: 150,
-                child: FutureBuilder(
-                  future: HospedeDB().hospedes(),
-                  builder: (context, snapshot) {
-                    switch (snapshot.connectionState) {
-                      case ConnectionState.waiting:
-                        return Center(
-                          child: Container(
-                            width: 50,
-                            height: 50,
-                            child: CircularProgressIndicator(),
-                          ),
-                        );
-                      case ConnectionState.done:
-                        if (snapshot.hasError) {
+                                  );
+                                },
+                              ),
+                            );
+                          }
+                        default:
                           return Center(
                             child: Container(
                               width: 100,
@@ -500,197 +580,136 @@ class _EntradasPageState extends State<EntradasPage> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.error),
-                                  Text("Unable to fetch rooms"),
+                                  Icon(Icons.question_mark),
+                                  Text("Unknown state"),
                                 ],
                               ),
                             ),
                           );
-                        } else {
-                          List<Hospede> hospedeLocal = snapshot.requireData;
-                          return StatefulBuilder(
-                            builder: (context, setState) => GridView.builder(
-                              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 150,
-                                childAspectRatio: 1.2,
-                              ),
-                              itemCount: hospedeLocal.length,
-                              itemBuilder: (context, index) {
-                                Hospede hospede = hospedeLocal[index];
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.all(Radius.circular(15)),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      Icon((hospede.empresa) ? Icons.business : Icons.people),
-                                      IconText(
-                                        icon: Icons.abc,
-                                        text: hospede.nome,
-                                      ),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          IconButton(
-                                            onPressed: () {
-                                              hospedes.remove(hospede);
-                                              setState(() {});
-                                            },
-                                            icon: Icon(Icons.remove),
-                                          ),
-                                          Text(
-                                            hospedes
-                                                .where((element) => element == hospede)
-                                                .length
-                                                .toString(),
-                                          ),
-                                          IconButton(
-                                            onPressed: () {
-                                              hospedes.add(hospede);
-                                              setState(() {});
-                                            },
-                                            icon: Icon(Icons.add),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        }
-                      default:
-                        return Center(
-                          child: Container(
-                            width: 100,
-                            height: 100,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.question_mark),
-                                Text("Unknown state"),
-                              ],
-                            ),
-                          ),
-                        );
-                    }
-                  },
+                      }
+                    },
+                  ),
                 ),
               ),
-            ),
-            StatefulBuilder(
-              builder: (context, setState) => Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () async {
-                      DateTime? nCheckIn = await showDatePicker(
-                        context: context,
-                        firstDate: DateTime.now().subtract(Duration(days: 120)),
-                        currentDate: DateTime.now(),
-                        lastDate: DateTime.now().add(Duration(days: 120)),
-                        helpText: "Check-in",
-                      );
-                      if (nCheckIn != null) {
-                        checkIn = nCheckIn;
-                      }
-                      setState(() {});
-                    },
-                    icon: Container(
-                      width: 150,
-                      height: 50,
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(25)),
+              StatefulBuilder(
+                builder: (context, setState) => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: () async {
+                        DateTime? nCheckIn = await showDatePicker(
+                          context: context,
+                          firstDate: DateTime.now().subtract(Duration(days: 120)),
+                          currentDate: checkIn.toLocal(),
+                          lastDate: DateTime.now().add(Duration(days: 120)),
+                          helpText: "Check-in",
+                        );
+                        if (nCheckIn != null) {
+                          checkIn = nCheckIn;
+                        }
+                        setState(() {});
+                      },
+                      icon: Container(
+                        width: 150,
+                        height: 50,
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(25)),
+                            ),
+                            label: Text("Check-in"),
                           ),
-                          label: Text("Check-in"),
-                        ),
-                        child: IconText(
-                          icon: Icons.calendar_month,
-                          text: formater.format(checkIn),
+                          child: IconText(
+                            icon: Icons.calendar_month,
+                            text: formater.format(checkIn),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: () async {
-                      DateTime? nCheckout = await showDatePicker(
-                        context: context,
-                        firstDate: DateTime.now().subtract(Duration(days: 120)),
-                        currentDate: DateTime.now(),
-                        lastDate: DateTime.now().add(Duration(days: 120)),
-                        helpText: "Check-Out",
-                      );
-                      if (nCheckout != null) {
-                        checkOut = nCheckout;
-                      }
-                      setState(() {});
-                    },
-                    icon: Container(
-                      width: 150,
-                      height: 50,
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(25)),
+                    IconButton(
+                      onPressed: () async {
+                        DateTime? nCheckout = await showDatePicker(
+                          context: context,
+                          firstDate: DateTime.now().subtract(Duration(days: 120)),
+                          currentDate: checkOut,
+                          lastDate: DateTime.now().add(Duration(days: 120)),
+                          helpText: "Check-Out",
+                        );
+                        if (nCheckout != null) {
+                          checkOut = nCheckout.toLocal();
+                        }
+                        setState(() {});
+                      },
+                      icon: Container(
+                        width: 150,
+                        height: 50,
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(25)),
+                            ),
+                            label: Text("Checkout"),
                           ),
-                          label: Text("Checkout"),
-                        ),
-                        child: IconText(
-                          icon: Icons.calendar_month,
-                          text: formater.format(checkOut),
+                          child: IconText(
+                            icon: Icons.calendar_month,
+                            text: formater.format(checkOut),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            CustomInput(
-              controller: diaria,
-              label: "Valor Diaria",
-              keyboardType: TextInputType.number,
-            ),
-            TextButton(
-              onPressed: () async {
-                if (quartos.isNotEmpty && hospedes.isNotEmpty && diaria.value.text.isNotEmpty) {
-                  Map<String, dynamic> entrada = {
-                    "checkin": checkIn.millisecondsSinceEpoch,
-                    "checkout": checkOut.millisecondsSinceEpoch,
-                    "quartos": jsonEncode(quartos.map((e) => e.toJson()).toList()),
-                    "hospedes": jsonEncode(hospedes.map((e) => e.toJson()).toList()),
-                    "diaria": diaria.doubleValue,
-                    "total": ((checkOut.difference(checkIn).inDays) *
-                        hospedes.length *
-                        diaria.doubleValue),
-                    "paga": 0,
-                  };
+              CustomInput(
+                controller: diaria,
+                label: "Valor Diaria",
+                keyboardType: TextInputType.number,
+              ),
+              CustomInput(
+                controller: observacao,
+                label: "Observação",
+                // outline: true,
+              ),
+              IconButton(
+                onPressed: () async {
+                  if (quartos.isNotEmpty && hospedes.isNotEmpty && diaria.value.text.isNotEmpty) {
+                    Map<String, dynamic> entrada = {
+                      "checkin": checkIn.millisecondsSinceEpoch,
+                      "checkout": checkOut.millisecondsSinceEpoch,
+                      "quartos": jsonEncode(quartos.map((e) => e.toJson()).toList()),
+                      "hospedes": jsonEncode(hospedes.map((e) => e.toJson()).toList()),
+                      "diaria": diaria.doubleValue,
+                      "total": (checkOut.difference(checkIn).inDays +
+                              (checkIn.isBefore(checkOut) ? 0 : 1)) *
+                          hospedes.length *
+                          diaria.doubleValue,
+                      "paga": 0,
+                      "observacao": observacao.text
+                    };
 
-                  bool ok = await EntradaDB().addEntrada(entrada);
-                  quartos.forEach(
-                    (element) {
-                      QuartoDB().ocuparQuarto(element.number);
-                    },
-                  );
+                    bool ok = await EntradaDB().addEntrada(entrada);
+                    quartos.forEach(
+                      (element) {
+                        QuartoDB().ocuparQuarto(element.number);
+                      },
+                    );
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        ok ? "Entrada adicionada" : "Erro ao adicionar entrada",
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          ok ? "Entrada adicionada" : "Erro ao adicionar entrada",
+                        ),
                       ),
-                    ),
-                  );
+                    );
 
-                  Navigator.of(context).pop();
-                }
-              },
-              child: Text("Adicionar"),
-            ),
-          ],
+                    Navigator.of(context).pop();
+                  }
+                },
+                color: Colors.white,
+                icon: Text("Adicionar"),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -707,8 +726,8 @@ class _EntradasPageState extends State<EntradasPage> {
         thousandSymbol: ".",
         minValue: 0,
         initDoubleValue: entrada.diaria);
-
-    // // print(hospedes);
+    TextEditingController observacao = TextEditingController(text: entrada.observacao);
+    // print(hospedes);
 
     return Dialog(
       insetPadding: EdgeInsets.all(15),
@@ -940,12 +959,12 @@ class _EntradasPageState extends State<EntradasPage> {
                       DateTime? nCheckIn = await showDatePicker(
                         context: context,
                         firstDate: DateTime.now().subtract(Duration(days: 120)),
-                        currentDate: DateTime.now(),
+                        currentDate: checkIn,
                         lastDate: DateTime.now().add(Duration(days: 120)),
                         helpText: "Check-in",
                       );
                       if (nCheckIn != null) {
-                        checkIn = nCheckIn;
+                        checkIn = nCheckIn.toLocal();
                       }
                       setState(() {});
                     },
@@ -971,12 +990,12 @@ class _EntradasPageState extends State<EntradasPage> {
                       DateTime? nCheckout = await showDatePicker(
                         context: context,
                         firstDate: DateTime.now().subtract(Duration(days: 120)),
-                        currentDate: DateTime.now(),
+                        currentDate: checkOut,
                         lastDate: DateTime.now().add(Duration(days: 120)),
                         helpText: "Check-Out",
                       );
                       if (nCheckout != null) {
-                        checkOut = nCheckout;
+                        checkOut = nCheckout.toLocal();
                       }
                       setState(() {});
                     },
@@ -1005,6 +1024,7 @@ class _EntradasPageState extends State<EntradasPage> {
               label: "Valor Diaria",
               keyboardType: TextInputType.number,
             ),
+            CustomInput(controller: observacao, label: "Observação"),
             TextButton(
               onPressed: () async {
                 Map<String, dynamic> new_entrada = {
@@ -1013,10 +1033,12 @@ class _EntradasPageState extends State<EntradasPage> {
                   "quartos": jsonEncode(quartos.map((e) => e.toJson()).toList()),
                   "hospedes": jsonEncode(hospedes.map((e) => e.toJson()).toList()),
                   "diaria": diaria.doubleValue,
-                  "total": ((checkOut.difference(checkIn).inDays) *
-                      hospedes.length *
-                      diaria.doubleValue),
+                  "total":
+                      (checkOut.difference(checkIn).inDays + (checkIn.isBefore(checkOut) ? 0 : 1)) *
+                          hospedes.length *
+                          diaria.doubleValue,
                   "paga": 0,
+                  "observacao": observacao.text,
                 };
 
                 bool ok = await EntradaDB().updateEntrada(entrada.id, new_entrada);
@@ -1068,8 +1090,8 @@ class _EntradasPageState extends State<EntradasPage> {
               DropdownMenu(
                 width: MediaQuery.of(context).size.width,
                 label: Text("Pagante"),
+                initialSelection: entrada.hospedes.first.nome,
                 onSelected: (value) {
-                  // print(value);
                   if (value != null) {
                     pagante.text = value;
                   }
@@ -1103,7 +1125,7 @@ class _EntradasPageState extends State<EntradasPage> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(25)),
                       ),
-                      label: Text("Check-in"),
+                      label: Text("Data de Pagamento"),
                     ),
                     child: IconText(
                       icon: Icons.calendar_month,
@@ -1116,6 +1138,7 @@ class _EntradasPageState extends State<EntradasPage> {
                 width: MediaQuery.of(context).size.width,
                 label: Text("Metodo de Pagamento"),
                 controller: metodo,
+                initialSelection: METODO_PAGAMENTO.DINHEIRO.name,
                 onSelected: (value) {
                   if (value == METODO_PAGAMENTO.PIX.name) {
                     PixFlutter pixFlutter = PixFlutter(
@@ -1150,29 +1173,37 @@ class _EntradasPageState extends State<EntradasPage> {
               TextButton(
                 child: Text("Pagar"),
                 onPressed: () async {
-                  Map<String, dynamic> pagamento = {
-                    "pagante": pagante.text,
-                    "valor": total.doubleValue,
-                    "data": data.millisecondsSinceEpoch,
-                    "metodo": metodo.text,
-                  };
-                  await PagamentoDB().addPagamento(pagamento);
-                  if (entrada.total == total.doubleValue) {
-                    await EntradaDB().setPago(entrada.id);
+                  if (pagante.text.isNotEmpty && metodo.text.isNotEmpty) {
+                    Map<String, dynamic> pagamento = {
+                      "pagante": pagante.text,
+                      "valor": total.doubleValue,
+                      "data": data.millisecondsSinceEpoch,
+                      "metodo": metodo.text,
+                    };
+                    await PagamentoDB().addPagamento(pagamento);
+                    if (entrada.total == total.doubleValue) {
+                      await EntradaDB().setPago(entrada.id);
+                    } else {
+                      await EntradaDB().changeTotal(
+                        entrada.id,
+                        total.doubleValue,
+                      );
+                    }
+
+                    entrada.quartos.forEach(
+                      (quarto) {
+                        QuartoDB().vagarQuarto(quarto.number);
+                      },
+                    );
+
+                    Navigator.of(context).pop();
                   } else {
-                    await EntradaDB().changeTotal(
-                      entrada.id,
-                      total.doubleValue,
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Preencha todos os campos"),
+                      ),
                     );
                   }
-
-                  entrada.quartos.forEach(
-                    (quarto) {
-                      QuartoDB().vagarQuarto(quarto.number);
-                    },
-                  );
-
-                  Navigator.of(context).pop();
                 },
               ),
             ],

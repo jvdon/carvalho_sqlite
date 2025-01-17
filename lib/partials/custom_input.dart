@@ -7,6 +7,7 @@ class CustomInput extends StatelessWidget {
   final double width;
   final TextInputType keyboardType;
   final List<TextInputFormatter> formatters;
+  final bool outline;
 
   const CustomInput({
     super.key,
@@ -15,6 +16,7 @@ class CustomInput extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.width = 150,
     this.formatters = const [],
+    this.outline = false,
   });
 
   @override
@@ -22,6 +24,7 @@ class CustomInput extends StatelessWidget {
     return TextField(
       decoration: InputDecoration(
         label: Text(label),
+        border: (outline) ? OutlineInputBorder() : UnderlineInputBorder(),
       ),
       keyboardType: keyboardType,
       controller: controller,

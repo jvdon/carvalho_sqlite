@@ -63,6 +63,7 @@ class _QuartosPageState extends State<QuartosPage> {
                     ),
                   );
                 }
+                quartos.sort((a, b) => a.number.compareTo(b.number));
                 quartos.sort((a, b) => (a.status == Quarto_Status.LIVRE) ? -1 : 1);
                 return Scaffold(
                   floatingActionButton: IconButton(

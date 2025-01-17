@@ -13,6 +13,7 @@ class Entrada {
   double diaria;
   double total;
   bool paga;
+  String observacao;
 
   Entrada({
     required this.id,
@@ -23,6 +24,7 @@ class Entrada {
     required this.diaria,
     required this.total,
     required this.paga,
+    required this.observacao,
   });
 
   factory Entrada.fromMap(Map<String, dynamic> map) {
@@ -34,26 +36,20 @@ class Entrada {
         ? map['checkout'] // If it's already an int, just use it
         : int.parse(map['checkout'].toString());
 
-    double diaria = (map['diaria'] is double)
-        ? map['diaria']
-        : double.parse(map['diaria'].toString());
+    double diaria =
+        (map['diaria'] is double) ? map['diaria'] : double.parse(map['diaria'].toString());
 
-    double total = (map['total'] is double)
-        ? map['total']
-        : double.parse(map['total'].toString());
+    double total = (map['total'] is double) ? map['total'] : double.parse(map['total'].toString());
     return Entrada(
       id: map['id'],
       checkin: DateTime.fromMillisecondsSinceEpoch(checkin),
       checkout: DateTime.fromMillisecondsSinceEpoch(checkout),
-      quartos: (jsonDecode(map['quartos']) as List)
-          .map((e) => Quarto.fromJSON(e))
-          .toList(),
-      hospedes: (jsonDecode(map['hospedes']) as List)
-          .map((e) => Hospede.fromJSON(e))
-          .toList(),
+      quartos: (jsonDecode(map['quartos']) as List).map((e) => Quarto.fromJSON(e)).toList(),
+      hospedes: (jsonDecode(map['hospedes']) as List).map((e) => Hospede.fromJSON(e)).toList(),
       diaria: diaria,
       total: total,
       paga: map['paga'] is bool ? map['paga'] : map['paga'] == 1,
+      observacao: map['observacao'] ?? "",
     );
   }
 
@@ -66,6 +62,7 @@ class Entrada {
       Pago: ${paga}
       Hospedes: ${hospedes.length}
       Quartos: ${quartos.length}
+      Observação: ${observacao}
     """;
   }
 }

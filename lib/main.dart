@@ -30,7 +30,8 @@ void main() async {
     hospedes TEXT DEFAULT \"[]\",
     diaria REAL,
     total REAL,
-    paga INTEGER DEFAULT 0
+    paga INTEGER DEFAULT 0,
+    observacao TEXT DEFAULT \"\"
   );
   
   CREATE TABLE IF NOT EXISTS quartos (

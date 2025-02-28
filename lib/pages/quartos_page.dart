@@ -26,7 +26,6 @@ class _QuartosPageState extends State<QuartosPage> {
               );
             case ConnectionState.done:
               if (snapshot.hasError) {
-                // print(snapshot.error);
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -38,7 +37,6 @@ class _QuartosPageState extends State<QuartosPage> {
                 );
               } else {
                 List<Quarto> quartos = snapshot.requireData;
-                // print(quartos.length);
                 if (quartos.isEmpty) {
                   return Center(
                     child: Column(

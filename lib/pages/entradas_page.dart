@@ -47,7 +47,6 @@ class _EntradasPageState extends State<EntradasPage> {
               );
             case ConnectionState.done:
               if (snapshot.hasError) {
-                // print(snapshot.error);
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -112,6 +111,10 @@ class _EntradasPageState extends State<EntradasPage> {
                     entradas.sort(
                       (a, b) => b.paga ? 1 : -1,
                     );
+                  case ordenador.DEVENDO:
+                    entradas.sort(
+                      (a, b) => b.paga ? -1 : 1,
+                    );
                 }
 
                 if (month != 0) {
@@ -146,9 +149,9 @@ class _EntradasPageState extends State<EntradasPage> {
                     actions: [
                       DropdownMenu(
                         initialSelection: month,
+                        label: Text("Mes"),
                         onSelected: (value) {
                           if (value != null) {
-                            // print(value);
                             setState(() {
                               month = value;
                             });
@@ -160,11 +163,12 @@ class _EntradasPageState extends State<EntradasPage> {
                             )
                             .toList(),
                       ),
+                      SizedBox(width: 10),
                       DropdownMenu(
                         initialSelection: orde,
+                        label: Text("Ordenador"),
                         onSelected: (value) {
                           if (value != null) {
-                            // print(value);
                             setState(() {
                               orde = (value);
                             });
@@ -277,12 +281,11 @@ class _EntradasPageState extends State<EntradasPage> {
                                   ),
                                 IconButton(
                                   onPressed: () async {
-                                    Directory directory = await getDownloadsDirectory() ??
-                                        await getApplicationDocumentsDirectory();
+                                    Directory directory =
+                                        await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
                                     String fileName =
                                         "hospedagem_${entrada.hospedes.first.nome}_${DateFormat("d_M_y").format(entrada.checkin)}.pdf";
                                     String path = join(directory.path, fileName);
-                                    // print(path);
 
                                     final pdf = pw.Document();
                                     pdf.addPage(
@@ -304,10 +307,8 @@ class _EntradasPageState extends State<EntradasPage> {
                                             pw.Row(
                                               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                                               children: [
-                                                pw.Text(
-                                                    "Entrada: ${formater.format(entrada.checkin)}"),
-                                                pw.Text(
-                                                    "Saída: ${formater.format(entrada.checkout)}"),
+                                                pw.Text("Entrada: ${formater.format(entrada.checkin)}"),
+                                                pw.Text("Saída: ${formater.format(entrada.checkout)}"),
                                               ],
                                             ),
                                             pw.Text("Hospedes: ${entrada.hospedes.length}"),
@@ -352,8 +353,9 @@ class _EntradasPageState extends State<EntradasPage> {
   }
 
   Widget _buildAddEntrada(BuildContext context) {
-    DateTime checkIn = DateTime.now().toLocal();
-    DateTime checkOut = DateTime.now().toLocal();
+    DateTime now = DateTime.now();
+    DateTime checkIn = DateTime(now.year, now.month, now.day);
+    DateTime checkOut = DateTime(now.year, now.month, now.day);
     List<Quarto> quartos = [];
     List<Hospede> hospedes = [];
     CurrencyTextFieldController diaria = CurrencyTextFieldController(
@@ -362,6 +364,7 @@ class _EntradasPageState extends State<EntradasPage> {
       thousandSymbol: ".",
       minValue: 0,
     );
+
     TextEditingController observacao = TextEditingController();
 
     return Dialog(
@@ -388,7 +391,7 @@ class _EntradasPageState extends State<EntradasPage> {
                   label: Text("Quartos"),
                 ),
                 child: Container(
-                  height: 150,
+                  height: 100,
                   child: FutureBuilder(
                     future: QuartoDB().avaliable(),
                     builder: (context, snapshot) {
@@ -439,9 +442,7 @@ class _EntradasPageState extends State<EntradasPage> {
                                     },
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: (quartos.contains(quarto))
-                                            ? Colors.red[900]
-                                            : Colors.black54,
+                                        color: (quartos.contains(quarto)) ? Colors.red[900] : Colors.black54,
                                         borderRadius: BorderRadius.all(Radius.circular(15)),
                                       ),
                                       child: Column(
@@ -488,7 +489,7 @@ class _EntradasPageState extends State<EntradasPage> {
                   label: Text("Hospedes"),
                 ),
                 child: Container(
-                  height: 150,
+                  height: 100,
                   child: FutureBuilder(
                     future: HospedeDB().hospedes(),
                     builder: (context, snapshot) {
@@ -551,10 +552,7 @@ class _EntradasPageState extends State<EntradasPage> {
                                               icon: Icon(Icons.remove),
                                             ),
                                             Text(
-                                              hospedes
-                                                  .where((element) => element == hospede)
-                                                  .length
-                                                  .toString(),
+                                              hospedes.where((element) => element == hospede).length.toString(),
                                             ),
                                             IconButton(
                                               onPressed: () {
@@ -591,11 +589,11 @@ class _EntradasPageState extends State<EntradasPage> {
                   ),
                 ),
               ),
-              StatefulBuilder(
-                builder: (context, setState) => Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  StatefulBuilder(
+                    builder: (context, setState) => IconButton(
                       onPressed: () async {
                         DateTime? nCheckIn = await showDatePicker(
                           context: context,
@@ -605,7 +603,7 @@ class _EntradasPageState extends State<EntradasPage> {
                           helpText: "Check-in",
                         );
                         if (nCheckIn != null) {
-                          checkIn = nCheckIn;
+                          checkIn = DateTime(nCheckIn.year, nCheckIn.month, nCheckIn.day);
                         }
                         setState(() {});
                       },
@@ -626,7 +624,9 @@ class _EntradasPageState extends State<EntradasPage> {
                         ),
                       ),
                     ),
-                    IconButton(
+                  ),
+                  StatefulBuilder(
+                    builder: (context, setState) => IconButton(
                       onPressed: () async {
                         DateTime? nCheckout = await showDatePicker(
                           context: context,
@@ -636,7 +636,7 @@ class _EntradasPageState extends State<EntradasPage> {
                           helpText: "Check-Out",
                         );
                         if (nCheckout != null) {
-                          checkOut = nCheckout.toLocal();
+                          checkOut = DateTime(nCheckout.year, nCheckout.month, nCheckout.day);
                         }
                         setState(() {});
                       },
@@ -657,8 +657,8 @@ class _EntradasPageState extends State<EntradasPage> {
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               CustomInput(
                 controller: diaria,
@@ -679,14 +679,10 @@ class _EntradasPageState extends State<EntradasPage> {
                       "quartos": jsonEncode(quartos.map((e) => e.toJson()).toList()),
                       "hospedes": jsonEncode(hospedes.map((e) => e.toJson()).toList()),
                       "diaria": diaria.doubleValue,
-                      "total": (checkOut.difference(checkIn).inDays +
-                              (checkIn.isBefore(checkOut) ? 0 : 1)) *
-                          hospedes.length *
-                          diaria.doubleValue,
+                      "total": daysBetween(checkIn, checkOut) * hospedes.length * diaria.doubleValue,
                       "paga": 0,
                       "observacao": observacao.text
                     };
-
                     bool ok = await EntradaDB().addEntrada(entrada);
                     quartos.forEach(
                       (element) {
@@ -716,18 +712,14 @@ class _EntradasPageState extends State<EntradasPage> {
   }
 
   Widget _buildEditEntrada(BuildContext context, Entrada entrada) {
-    DateTime checkIn = entrada.checkin;
-    DateTime checkOut = entrada.checkout;
+    DateTime checkIn = DateTime(entrada.checkin.year, entrada.checkin.month, entrada.checkin.day);
+    DateTime checkOut = DateTime(entrada.checkout.year, entrada.checkout.month, entrada.checkout.day);
     List<Quarto> quartos = entrada.quartos;
     List<Hospede> hospedes = entrada.hospedes;
     CurrencyTextFieldController diaria = CurrencyTextFieldController(
-        currencySymbol: "R\$",
-        decimalSymbol: ",",
-        thousandSymbol: ".",
-        minValue: 0,
-        initDoubleValue: entrada.diaria);
+        currencySymbol: "R\$", decimalSymbol: ",", thousandSymbol: ".", minValue: 0, initDoubleValue: entrada.diaria);
+
     TextEditingController observacao = TextEditingController(text: entrada.observacao);
-    // print(hospedes);
 
     return Dialog(
       insetPadding: EdgeInsets.all(15),
@@ -797,9 +789,7 @@ class _EntradasPageState extends State<EntradasPage> {
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: (quartos.contains(quarto))
-                                          ? Colors.red[900]
-                                          : Colors.black54,
+                                      color: (quartos.contains(quarto)) ? Colors.red[900] : Colors.black54,
                                       borderRadius: BorderRadius.all(Radius.circular(15)),
                                     ),
                                     child: Column(
@@ -909,15 +899,11 @@ class _EntradasPageState extends State<EntradasPage> {
                                             icon: Icon(Icons.remove),
                                           ),
                                           Text(
-                                            hospedes
-                                                .where((element) => element == hospede)
-                                                .length
-                                                .toString(),
+                                            hospedes.where((element) => element == hospede).length.toString(),
                                           ),
                                           IconButton(
                                             onPressed: () {
                                               hospedes.add(hospede);
-                                              // print(hospedes);
                                               setState(() {});
                                             },
                                             icon: Icon(Icons.add),
@@ -950,21 +936,21 @@ class _EntradasPageState extends State<EntradasPage> {
                 ),
               ),
             ),
-            StatefulBuilder(
-              builder: (context, setState) => Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                StatefulBuilder(
+                  builder: (context, setState) => IconButton(
                     onPressed: () async {
                       DateTime? nCheckIn = await showDatePicker(
                         context: context,
                         firstDate: DateTime.now().subtract(Duration(days: 120)),
-                        currentDate: checkIn,
+                        currentDate: checkIn.toLocal(),
                         lastDate: DateTime.now().add(Duration(days: 120)),
                         helpText: "Check-in",
                       );
                       if (nCheckIn != null) {
-                        checkIn = nCheckIn.toLocal();
+                        checkIn = DateTime(nCheckIn.year, nCheckIn.month, nCheckIn.day);
                       }
                       setState(() {});
                     },
@@ -985,7 +971,9 @@ class _EntradasPageState extends State<EntradasPage> {
                       ),
                     ),
                   ),
-                  IconButton(
+                ),
+                StatefulBuilder(
+                  builder: (context, setState) => IconButton(
                     onPressed: () async {
                       DateTime? nCheckout = await showDatePicker(
                         context: context,
@@ -995,7 +983,7 @@ class _EntradasPageState extends State<EntradasPage> {
                         helpText: "Check-Out",
                       );
                       if (nCheckout != null) {
-                        checkOut = nCheckout.toLocal();
+                        checkOut = DateTime(nCheckout.year, nCheckout.month, nCheckout.day);
                       }
                       setState(() {});
                     },
@@ -1016,8 +1004,8 @@ class _EntradasPageState extends State<EntradasPage> {
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
             CustomInput(
               controller: diaria,
@@ -1033,14 +1021,10 @@ class _EntradasPageState extends State<EntradasPage> {
                   "quartos": jsonEncode(quartos.map((e) => e.toJson()).toList()),
                   "hospedes": jsonEncode(hospedes.map((e) => e.toJson()).toList()),
                   "diaria": diaria.doubleValue,
-                  "total":
-                      (checkOut.difference(checkIn).inDays + (checkIn.isBefore(checkOut) ? 0 : 1)) *
-                          hospedes.length *
-                          diaria.doubleValue,
+                  "total": daysBetween(checkIn, checkOut) * hospedes.length * diaria.doubleValue,
                   "paga": 0,
                   "observacao": observacao.text,
                 };
-
                 bool ok = await EntradaDB().updateEntrada(entrada.id, new_entrada);
 
                 ScaffoldMessenger.of(context).showSnackBar(

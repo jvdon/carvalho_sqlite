@@ -58,8 +58,6 @@ void main() async {
   );
 """;
 
-  // print(path);
-
   openDatabase(
     path,
     onCreate: (db, version) async {

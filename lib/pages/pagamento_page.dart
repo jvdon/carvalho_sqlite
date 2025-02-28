@@ -25,7 +25,6 @@ class _PagamentoPageState extends State<PagamentoPage> {
               );
             case ConnectionState.done:
               if (snapshot.hasError) {
-                // print(snapshot.error);
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -37,7 +36,6 @@ class _PagamentoPageState extends State<PagamentoPage> {
                 );
               } else {
                 List<Pagamento> pagamentos = snapshot.requireData;
-                // print(pagamentos.length);
                 if (pagamentos.isEmpty) {
                   return Center(
                     child: Column(

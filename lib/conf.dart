@@ -28,6 +28,5 @@ enum ordenador {
   DEVENDO,
 }
 
-int daysBetween(DateTime a, DateTime b) {
-  return ((b.millisecondsSinceEpoch - a.millisecondsSinceEpoch) / (24 * 60 * 60 * 1000)).toInt() + 1;
-}
+int daysBetween(DateTime a, DateTime b) => ((b.millisecondsSinceEpoch - a.millisecondsSinceEpoch) / (24 * 60 * 60 * 1000)).toInt() + 1;
+

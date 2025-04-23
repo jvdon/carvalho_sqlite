@@ -20,26 +20,20 @@ class IconText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> widgets = [
+      Text(
+        text,
+        style: TextStyle(fontSize: fontSize),
+      ),
+      Icon(icon),
+    ];
+
     return Container(
       width: width,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         spacing: spacing,
-        children: reversed
-            ? [
-                Text(
-                  text,
-                  style: TextStyle(fontSize: fontSize),
-                ),
-                Icon(icon),
-              ]
-            : [
-                Icon(icon),
-                Text(
-                  text,
-                  style: TextStyle(fontSize: fontSize),
-                ),
-              ],
+        children: reversed ? widgets : widgets.reversed.toList(),
       ),
     );
   }

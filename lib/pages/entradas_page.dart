@@ -373,7 +373,7 @@ class _EntradasPageState extends State<EntradasPage> {
         padding: EdgeInsets.all(15),
         width: MediaQuery.of(context).size.width,
         decoration: BoxDecoration(
-          color: Colors.black87,
+          color: Color(0xFF151515),
           border: Border.all(
             color: Colors.white,
           ),
@@ -391,7 +391,7 @@ class _EntradasPageState extends State<EntradasPage> {
                   label: Text("Quartos"),
                 ),
                 child: Container(
-                  height: 100,
+                  height: 150,
                   child: FutureBuilder(
                     future: QuartoDB().avaliable(),
                     builder: (context, snapshot) {
@@ -442,7 +442,7 @@ class _EntradasPageState extends State<EntradasPage> {
                                     },
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: (quartos.contains(quarto)) ? Colors.red[900] : Colors.black54,
+                                        color: (quartos.contains(quarto)) ? Colors.red[300] : Color(0xFF222222),
                                         borderRadius: BorderRadius.all(Radius.circular(15)),
                                       ),
                                       child: Column(
@@ -489,7 +489,7 @@ class _EntradasPageState extends State<EntradasPage> {
                   label: Text("Hospedes"),
                 ),
                 child: Container(
-                  height: 100,
+                  height: 150,
                   child: FutureBuilder(
                     future: HospedeDB().hospedes(),
                     builder: (context, snapshot) {
@@ -530,7 +530,7 @@ class _EntradasPageState extends State<EntradasPage> {
                                   Hospede hospede = hospedeLocal[index];
                                   return Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.black54,
+                                      color: (hospedes.contains(hospede)) ? Colors.red[300] : Color(0xFF222222),
                                       borderRadius: BorderRadius.all(Radius.circular(15)),
                                     ),
                                     child: Column(
@@ -726,7 +726,12 @@ class _EntradasPageState extends State<EntradasPage> {
       child: Container(
         padding: EdgeInsets.all(15),
         width: MediaQuery.of(context).size.width,
-        color: Colors.black87,
+        height: 650,
+        decoration: BoxDecoration(
+          color: Color(0xFF151515),
+          border: Border.all(color: Colors.red),
+          borderRadius: BorderRadius.all(Radius.circular(25)),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           spacing: 10,
@@ -789,7 +794,7 @@ class _EntradasPageState extends State<EntradasPage> {
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: (quartos.contains(quarto)) ? Colors.red[900] : Colors.black54,
+                                      color: (quartos.contains(quarto)) ? Colors.red[300] : Color(0xFF222222),
                                       borderRadius: BorderRadius.all(Radius.circular(15)),
                                     ),
                                     child: Column(
@@ -877,7 +882,7 @@ class _EntradasPageState extends State<EntradasPage> {
                                 Hospede hospede = hospedeLocal[index];
                                 return Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.black54,
+                                    color: (hospedes.contains(hospede)) ? Colors.red[300] : Color(0xFF151515),
                                     borderRadius: BorderRadius.all(Radius.circular(15)),
                                   ),
                                   child: Column(
@@ -1063,7 +1068,7 @@ class _EntradasPageState extends State<EntradasPage> {
           padding: EdgeInsets.all(20),
           height: 450,
           decoration: BoxDecoration(
-            color: Colors.black87,
+            color: Color(0xFF222222),
             border: Border.all(color: Colors.white),
             borderRadius: BorderRadius.all(Radius.circular(25)),
           ),
@@ -1102,7 +1107,7 @@ class _EntradasPageState extends State<EntradasPage> {
                   setState(() {});
                 },
                 icon: Container(
-                  width: 120,
+                  width: 150,
                   height: 50,
                   child: InputDecorator(
                     decoration: InputDecoration(
